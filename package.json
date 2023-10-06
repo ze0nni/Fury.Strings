@@ -1,0 +1,25 @@
+{
+  "name": "com.pixelrebels.fury.strings",
+  "author": "ze0nni",
+  "displayName": "Fury.Strings",
+  "description": "Tools for format strings and html strings with minimum allocations.",
+  "category": "Data management",
+  "version": "0.0.1",
+    "keywords": [
+        "tools",
+        "text",
+        "localization"
+    ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ze0nni/Fury.Strings.git"
+  },
+  "type": "tool",
+  "dependencies": {
+  },
+  "author": {
+    "name": "Onni",
+    "email": "ze0nni@gmail.com",
+    "url": "https://pixel-rebels.com/"
+  }
+}
