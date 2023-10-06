@@ -18,17 +18,20 @@ namespace Fury.Strings
         private string[] _args;
         private StringDictionary<string> _colorMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
+        public StringDictionary<Func<StringKey, string>> _mappedTags;
         
         public void Setup(
             string format,
             string[] args = null,
             StringDictionary<string> colorMap = null,
-            StringDictionary<(string, string)> tagsAlias = null)
+            StringDictionary<(string, string)> tagsAlias = null,
+            StringDictionary<Func<StringKey, string>> mappedTags = null)
         {
             _format = format;
             _args = args;
             _colorMap = colorMap;
             _tagsAlias = tagsAlias;
+            _mappedTags = mappedTags;
         }
         
         public override string ToString()
@@ -108,7 +111,7 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void Process(char* start, int size)
         {
-            var parseHtml = _colorMap != null || _tagsAlias != null;
+            var parseHtml = _colorMap != null || _tagsAlias != null || _mappedTags != null;
             var parseArgs = _args != null;
 
             var cursor = start;
@@ -216,7 +219,6 @@ namespace Fury.Strings
                         break;
                 }
             }
-            
             if (name == "color" && _colorMap != null && _colorMap.TryGetValue(value, out var color))
             {
                 Append('<');
@@ -235,6 +237,9 @@ namespace Fury.Strings
                 {
                     Append(alias.close);
                 }
+            } else if (_mappedTags != null && _mappedTags.TryGetValue(name, out var resolver))
+            {
+                Append(resolver(value));
             }
             else
             {
