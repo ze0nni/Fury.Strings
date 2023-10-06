@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace Fury.Strings
 {
@@ -16,15 +15,18 @@ namespace Fury.Strings
         }
 
         private string _format;
+        private string[] _args;
         private StringDictionary<string> _colorMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
         
         public void Setup(
             string format,
+            string[] args = null,
             StringDictionary<string> colorMap = null,
             StringDictionary<(string, string)> tagsAlias = null)
         {
             _format = format;
+            _args = args;
             _colorMap = colorMap;
             _tagsAlias = tagsAlias;
         }
@@ -35,32 +37,49 @@ namespace Fury.Strings
             Process(_format);
             return new string(_buffer, 0, _length);
         }
-
+        
         private void EnsureCapacity()
         {
             var newBuffer = new char[_buffer.Length * 2];
             Array.Copy(_buffer, newBuffer, _buffer.Length);
             _buffer = newBuffer;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Append(char c)
         {
             if (_length == _buffer.Length)
+            {
                 EnsureCapacity();
+            }
             _buffer[_length++] = c;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void Append(char* cursor, int length)
+        private void EnsureCapacity(int newLength)
         {
-            while (length-- > 0)
-            {
-                Append(*cursor);
-                cursor++;
-            }
+            var newBuffer = new char[newLength * 2];
+            Array.Copy(_buffer, newBuffer, _buffer.Length);
+            _buffer = newBuffer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private unsafe void Append(char* src, int length)
+        {
+            var finalLength = _length + length;
+            if (finalLength >= _buffer.Length)
+            {
+                EnsureCapacity(finalLength);
+            }
+            var n = _length;
+            var buffer = _buffer;
+            while (length-- > 0)
+            {
+                buffer[n++] = *src++;
+            }
+            _length = n;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void Append(string str)
         {
             fixed (char* cursor = str)
@@ -69,7 +88,8 @@ namespace Fury.Strings
             }
         }
 
-        private unsafe void Append(StringKey key)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private unsafe void Append(ref StringKey key)
         {
             fixed (char* ptr = key)
             {
@@ -85,16 +105,20 @@ namespace Fury.Strings
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void Process(char* start, int size)
         {
+            var parseHtml = _colorMap != null || _tagsAlias != null;
+            var parseArgs = _args != null;
+
             var cursor = start;
             var end = start + size;
             while (cursor < end)
             {
-                if (*cursor == '<')
+                if (parseHtml  && * cursor == '<')
                 {
                     ParseTag(ref cursor, end);
-                } else if (*cursor == '{')
+                } else if (parseArgs  && * cursor == '{')
                 {
                     ParseArg(ref cursor, end);
                 }
@@ -113,7 +137,8 @@ namespace Fury.Strings
             Value,
             Close
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void ParseTag(ref char* cursor, char* end)
         {
             var state = ParseTagState.Open;
@@ -195,7 +220,7 @@ namespace Fury.Strings
             if (name == "color" && _colorMap != null && _colorMap.TryGetValue(value, out var color))
             {
                 Append('<');
-                Append(name);
+                Append(ref name);
                 Append('=');
                 Append(color);
                 Append('>');
@@ -218,19 +243,104 @@ namespace Fury.Strings
                 {
                     Append('/');
                 }
-                Append(name);
+                Append(ref name);
                 if (value.Length > 0)
                 {
                     Append('=');
-                    Append(value);
+                    Append(ref value);
                 }
                 Append('>');
             }
         }
 
+        private enum ParseArgState
+        {
+            Open,
+            Body,
+            Close,
+            Revert
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void ParseArg(ref char* cursor, char* end)
         {
-            
+            var state = ParseArgState.Open;
+
+            var revert = cursor;
+
+            var pStart = cursor;
+            var pLength = 0;
+            var body = default(StringKey);
+
+            while (state != ParseArgState.Close && state != ParseArgState.Revert)
+            {
+                cursor++;
+                if (cursor >= end)
+                {
+                    state = ParseArgState.Revert;
+                }
+                switch (state)
+                {
+                    case ParseArgState.Open:
+                        {
+                            if (*cursor >= '0' && *cursor <= '9')
+                            {
+                                state = ParseArgState.Body;
+                                pStart = cursor;
+                                pLength = 1;
+                            } else
+                            {
+                                state = ParseArgState.Revert;
+                            }
+                        }
+                        break;
+                    case ParseArgState.Body:
+                        {
+                            if (*cursor >= '0' && *cursor <= '9')
+                            {
+                                pLength++;
+                            }
+                            else if (*cursor == '}')
+                            {
+                                state = ParseArgState.Close;
+                                body = new StringKey(pStart, 0, pLength);
+                                cursor++;
+                            }
+                            else
+                            {
+                                state = ParseArgState.Revert;
+                            }
+                        }
+                        break;
+                }
+            }
+
+            switch (state)
+            {
+                case ParseArgState.Revert:
+                    {
+                        Append(*revert);
+                        cursor = revert + 1;
+                    }
+                    break;
+                case ParseArgState.Close:
+                    {
+                        var args = _args;
+                        var argsN = args.Length;
+                        if (body.TryParseInt(out var n) && n >= 0 && n < argsN)
+                        {
+                            Append(args[n]);
+                        } else
+                        {
+                            Append("{");
+                            Append(ref body);
+                            Append("}");
+                        }
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException(state.ToString());
+            }
         }
     }
 }

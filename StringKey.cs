@@ -11,7 +11,8 @@ namespace Fury.Strings
         private readonly char* _ptr;
         private readonly int _start;
         public readonly int Length;
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringKey(string str)
         {
             if (str == null)
@@ -23,6 +24,7 @@ namespace Fury.Strings
             Length = _str.Length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringKey(string str, int start, int length)
         {
             if (str == null)
@@ -36,6 +38,7 @@ namespace Fury.Strings
             Length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringKey(char[] chars, int start, int length)
         {
             if (chars == null)
@@ -49,6 +52,7 @@ namespace Fury.Strings
             Length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringKey(char* ptr, int start, int length)
         {
             if (ptr == null)
@@ -60,6 +64,7 @@ namespace Fury.Strings
             Length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe ref readonly char GetPinnableReference()
         {
             if (_str != null) fixed (char* s = _str) return ref UnsafeUtility.AsRef<char>(s + _start);
