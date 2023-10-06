@@ -24,7 +24,6 @@ namespace Fury.Strings
             StringDictionary<string> colorMap = null,
             StringDictionary<(string, string)> tagsAlias = null)
         {
-            _length = 0;
             _format = format;
             _colorMap = colorMap;
             _tagsAlias = tagsAlias;
@@ -32,6 +31,7 @@ namespace Fury.Strings
         
         public override string ToString()
         {
+            _length = 0;
             Process(_format);
             return new string(_buffer, 0, _length);
         }
@@ -71,9 +71,10 @@ namespace Fury.Strings
 
         private unsafe void Append(StringKey key)
         {
-            var cursor = key.Pin(out var pinned, out var handle);
-            Append(cursor, key.Length);
-            if (pinned) handle.Free();
+            fixed (char* ptr = key)
+            {
+                Append(ptr, key.Length);
+            }
         }
 
         private unsafe void Process(string format)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Codice.CM.SemanticMerge.Gui;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Fury.Strings
 {
@@ -61,42 +60,15 @@ namespace Fury.Strings
             Length = length;
         }
 
-        public char* Pin(out bool pinned, out GCHandle handle)
+        public unsafe ref readonly char GetPinnableReference()
         {
-            if (Length == 0)
-            {
-                pinned = false;
-                handle = default;
-                return null;
-            }
-            
-            char* ptr;
-            if (_str != null)
-            {
-                pinned = true;
-                handle = GCHandle.Alloc(_str, GCHandleType.Pinned);
-                ptr = (char*)handle.AddrOfPinnedObject().ToPointer();
-            }
-            else if (_chars != null)
-            {
-                pinned = true;
-                handle = GCHandle.Alloc(_chars, GCHandleType.Pinned);
-                ptr = (char*)handle.AddrOfPinnedObject().ToPointer();
-            }
-            else if (_ptr != null)
-            {
-                pinned = false;
-                handle = default;
-                ptr = _ptr;
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-
-            return ptr + _start;
+            if (_str != null) fixed (char* s = _str) return ref UnsafeUtility.AsRef<char>(s + _start);
+            if (_chars != null) fixed (char* s = _chars) return ref UnsafeUtility.AsRef<char>(s + _start);
+            if (_ptr != null) return ref UnsafeUtility.AsRef<char>(_ptr + _start);
+            return ref UnsafeUtility.AsRef<char>(IntPtr.Zero.ToPointer());
         }
-        
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(StringKey other)
         {
@@ -110,13 +82,13 @@ namespace Fury.Strings
                 return true;
             }
 
-            var c0 = Pin(out var p0, out var h0);
-            var c1 = Pin(out var p1, out var h1);
+            
 
-            try
+            fixed(char* p0 = this, p1 = other)
             {
+                var c0 = p0;
+                var c1 = p1;
                 var n = Length;
-
                 while (n-- > 0)
                 {
                     if (*c0 != *c1)
@@ -127,11 +99,6 @@ namespace Fury.Strings
                     c0++;
                     c1++;
                 }
-            }
-            finally
-            {
-                if (p0) h0.Free();
-                if (p1) h1.Free();
             }
 
             return true;
@@ -151,10 +118,10 @@ namespace Fury.Strings
 
         public override int GetHashCode()
         {
-            var ptr = Pin(out var pinned, out var handle);
-            var hash = GetHashCode(ptr, Length);
-            if (pinned) handle.Free();
-            return hash;
+            fixed (char* ptr = this)
+            {
+                return GetHashCode(ptr, Length);
+            }
         }
 
         public override string ToString()
@@ -169,10 +136,10 @@ namespace Fury.Strings
                 return _str;
             }
 
-            var ptr = Pin(out var pinned, out var handle);
-            var result = new string(ptr, 0, Length);
-            if (pinned) handle.Free();
-            return result;
+            fixed (char* ptr = this)
+            {
+                return new string(ptr, 0, Length);
+            }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
