@@ -11,6 +11,12 @@ namespace Fury.Strings
                 throw new ArgumentOutOfRangeException(nameof(@base));
             }
 
+            if (number == 0)
+            {
+                format.Append('0');
+                return;
+            }
+
             if (number  < 0)
             {
                 format.Append('-');
@@ -36,9 +42,76 @@ namespace Fury.Strings
             format.Append(digits, numDigits);
         }
 
-        public static unsafe void Append(this ZeroFormat format, float number, sbyte digitsAfterDecimal = -1)
+        public enum AfterDecimalFormat
         {
-            format.Append("Float's not implementes");
+            MaxNonZero,
+            Fixed
+        }
+
+        public static unsafe void Append(this ZeroFormat format, float number, AfterDecimalFormat afterFormat, sbyte afterDecimalSize)
+        {
+            if (float.IsNaN(number))
+            {
+                format.Append("NaN");
+                return;
+            }
+            if (float.IsPositiveInfinity(number))
+            {
+                format.Append("Inf+");
+                return;
+            }
+            if (float.IsNegativeInfinity(number))
+            {
+                format.Append("Inf-");
+                return;
+            }
+
+            var intNumber = (int)number;
+            format.Append(intNumber);
+            var fraction = number - intNumber;
+
+            if (afterFormat == AfterDecimalFormat.Fixed)
+            {
+                format.Append('.');
+
+                for (var i = 0; i < afterDecimalSize; i++)
+                {
+                    fraction = fraction * 10f;
+                    var digit = (int)(fraction);
+                    format.Append((char)('0' + digit));
+                    fraction -= digit;
+                }
+            } else
+            {
+                var fraction0 = fraction;
+
+                var count = 0;
+                for (var i = 0; i < afterDecimalSize; i++)
+                {
+                    fraction = fraction * 10f;
+                    var digit = (int)(fraction);
+                    fraction -= digit;
+                    if (digit != 0)
+                    {
+                        count = i + 1;
+                    }
+                }
+
+                if (count == 0)
+                {
+                    return;
+                }
+                format.Append('.');
+
+                fraction = fraction0;
+                for (var i = 0; i < count; i++)
+                {
+                    fraction = fraction * 10f;
+                    var digit = (int)(fraction);
+                    format.Append((char)('0' + digit));
+                    fraction -= digit;
+                }
+            }
         }
     }
 }

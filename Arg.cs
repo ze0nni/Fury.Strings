@@ -90,7 +90,7 @@ namespace Fury.Strings
             _sb0 = maxDigitsAfterDecimal;
         }
 
-        internal void FloatFixedAfterDecimal(float number, sbyte fixedAfterDecimal= 2)
+        internal void FloatFixed(float number, sbyte fixedAfterDecimal= 2)
         {
             _type = ArgType.FloatFixedAfterDecimal;
             _float = number;
@@ -135,10 +135,10 @@ namespace Fury.Strings
                     format.Append(_int, _b0);
                     return true;
                 case ArgType.Float:
-                    format.Append(_float, _sb0);
+                    format.Append(_float, ZeroFormatExtensions.AfterDecimalFormat.MaxNonZero, _sb0);
                     return true;
                 case ArgType.FloatFixedAfterDecimal:
-                    format.Append(_float, _sb0);
+                    format.Append(_float, ZeroFormatExtensions.AfterDecimalFormat.Fixed, _sb0);
                     return true;
                 case ArgType.Object:
                     format.Append(_obj == null ? "null" :_obj.ToString());

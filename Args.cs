@@ -95,23 +95,30 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Float(float number, sbyte maxDigitsAfterDecimal = -1)
+        public Args Float(float number, sbyte maxDigitsAfterDecimal = 2)
         {
-            Append().Float(number, 0);
+            Append().Float(number, maxDigitsAfterDecimal);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args FloatFixedAfterDecimal(float number, sbyte fixedAfterDecimal = 2)
+        public Args FloatFixed(float number, sbyte fixedAfterDecimal = 2)
         {
-            Append().FloatFixedAfterDecimal(number, fixedAfterDecimal);
+            Append().FloatFixed(number, fixedAfterDecimal);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Dobule(double number, sbyte digitsAfterDecimal = -1)
+        public Args Dobule(double number, sbyte maxDigitsAfterDecimal = 2)
         {
-            Append().Float((float)number, 0);
+            Append().Float((float)number, maxDigitsAfterDecimal);
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Args DobuleFixed(double number, sbyte fixedAfterDecimal = 2)
+        {
+            Append().FloatFixed((float)number, fixedAfterDecimal);
             return this;
         }
 
