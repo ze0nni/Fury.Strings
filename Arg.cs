@@ -8,10 +8,12 @@ namespace Fury.Strings
         Null,
         Bool,
         Char,
+        CharRepeat,
         String,
         StringRange,
         Int,
         Float,
+        FloatFixedAfterDecimal,
         Object,
     }
 
@@ -41,25 +43,32 @@ namespace Fury.Strings
 
         [FieldOffset(Helpers.PtrSize + sizeof(int) + sizeof(int))] private ArgType _type;
 
-        internal void Set(bool b)
+        internal void Bool(bool b)
         {
             _type = ArgType.Bool;
             _bool = b;
         }
 
-        internal void Set(char c)
+        internal void Char(char c)
         {
             _type = ArgType.Char;
             _char = c;
         }
 
-        internal void Set(string str)
+        internal void Char(char c, short repeat)
+        {
+            _type = ArgType.Char;
+            _char = c;
+            _s0 = repeat;
+        }
+
+        internal void Str(string str)
         {
             _type = ArgType.String;
             _str = str;
         }
 
-        internal void Set(string str, short start, short length)
+        internal void StrRange(string str, short start, short length)
         {
             _type = ArgType.StringRange;
             _str = str;
@@ -67,21 +76,28 @@ namespace Fury.Strings
             _s1 = length;
         }
 
-        internal void Set(int number, byte numberBase = 10)
+        internal void Int(int number, byte numberBase = 10)
         {
             _type = ArgType.Int;
             _int = number;
             _b0 = numberBase;
         }
 
-        internal void Set(float number, sbyte digitsAfterDecimal = -1)
+        internal void Float(float number, sbyte maxDigitsAfterDecimal = -1)
         {
             _type = ArgType.Float;
             _float = number;
-            _sb0 = digitsAfterDecimal;
+            _sb0 = maxDigitsAfterDecimal;
         }
 
-        internal void Set(object obj)
+        internal void FloatFixedAfterDecimal(float number, sbyte fixedAfterDecimal= 2)
+        {
+            _type = ArgType.FloatFixedAfterDecimal;
+            _float = number;
+            _sb0 = fixedAfterDecimal;
+        }
+
+        internal void Obj(object obj)
         {
             _type = ArgType.Object;
             _obj = obj;
@@ -99,6 +115,11 @@ namespace Fury.Strings
                 case ArgType.Char:
                     format.Append(_char);
                     return true;
+                case ArgType.CharRepeat:
+                    for (var i = 0; i < _s0; i++) {
+                        format.Append(_char);
+                    }
+                    return false;
                 case ArgType.String:
                     format.Append(_str);
                     return true;
@@ -114,6 +135,9 @@ namespace Fury.Strings
                     format.Append(_int, _b0);
                     return true;
                 case ArgType.Float:
+                    format.Append(_float, _sb0);
+                    return true;
+                case ArgType.FloatFixedAfterDecimal:
                     format.Append(_float, _sb0);
                     return true;
                 case ArgType.Object:
@@ -134,6 +158,8 @@ namespace Fury.Strings
                     return _bool ? "true" : "false";
                 case ArgType.Char:
                     return _char.ToString();
+                case ArgType.CharRepeat:
+                    return new string(_char, _s0);
                 case ArgType.String:
                     return _str;
                 case ArgType.StringRange:
@@ -141,6 +167,8 @@ namespace Fury.Strings
                 case ArgType.Int:
                     return _int.ToString();
                 case ArgType.Float:
+                    return _float.ToString();
+                case ArgType.FloatFixedAfterDecimal:
                     return _float.ToString();
                 case ArgType.Object:
                     return _obj;

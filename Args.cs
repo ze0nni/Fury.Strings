@@ -41,32 +41,39 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(bool b)
+        public Args Bool(bool b)
         {
-            Append().Set(b);
+            Append().Bool(b);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(char c)
+        public Args Char(char c)
         {
-            Append().Set(c);
+            Append().Char(c);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(string str)
+        public Args CharRepeat(char c, short repeat)
+        {
+            Append().Char(c, repeat);
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Args Str(string str)
         {
             if (str == null)
             {
                 throw new ArgumentNullException(nameof(str));
             }
-            Append().Set(str);
+            Append().Str(str);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(string str, short start, short length)
+        public Args StrRange(string str, short start, short length)
         {
             if (str == null)
             {
@@ -76,35 +83,42 @@ namespace Fury.Strings
             {
                 throw new ArgumentOutOfRangeException();
             }
-            Append().Set(str, start, length);
+            Append().StrRange(str, start, length);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(int number, byte @base = 10)
+        public Args Int(int number, byte @base = 10)
         {
-            Append().Set(number, @base);
+            Append().Int(number, @base);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(float number, sbyte digitsAfterDecimal = -1)
+        public Args Float(float number, sbyte maxDigitsAfterDecimal = -1)
         {
-            Append().Set(number, 0);
+            Append().Float(number, 0);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(double number, sbyte digitsAfterDecimal = -1)
+        public Args FloatFixedAfterDecimal(float number, sbyte fixedAfterDecimal = 2)
         {
-            Append().Set((float)number, 0);
+            Append().FloatFixedAfterDecimal(number, fixedAfterDecimal);
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Args Add(object obj)
+        public Args Dobule(double number, sbyte digitsAfterDecimal = -1)
         {
-            Append().Set(obj);
+            Append().Float((float)number, 0);
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Args Obj(object obj)
+        {
+            Append().Obj(obj);
             return this;
         }
 
@@ -129,7 +143,7 @@ namespace Fury.Strings
             var args = new Args();
             foreach (var a in input)
             {
-                args.Add(a);
+                args.Str(a);
             }
             return args;
         }
@@ -139,7 +153,7 @@ namespace Fury.Strings
             var args = new Args();
             foreach (var a in input)
             {
-                args.Add(a);
+                args.Obj(a);
             }
             return args;
         }
