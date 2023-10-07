@@ -123,5 +123,30 @@ namespace Fury.Strings
                     throw new NotImplementedException(_type.ToString());
             }
         }
+
+        internal object ToObject()
+        {
+            switch (_type)
+            {
+                case ArgType.Null:
+                    return null;
+                case ArgType.Bool:
+                    return _bool ? "true" : "false";
+                case ArgType.Char:
+                    return _char.ToString();
+                case ArgType.String:
+                    return _str;
+                case ArgType.StringRange:
+                    return _str.Substring(_s0, _s1);
+                case ArgType.Int:
+                    return _int.ToString();
+                case ArgType.Float:
+                    return _float.ToString();
+                case ArgType.Object:
+                    return _obj;
+                default:
+                    throw new NotImplementedException(_type.ToString());
+            }
+        }
     }
 }

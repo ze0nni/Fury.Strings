@@ -7,6 +7,7 @@ namespace Fury.Strings
     {
         private readonly Action _onChanged;
         private Arg[] _items = new Arg[8];
+        private object[] _objItems = new object[8];
         private int _length;
         public int Length => _length;
 
@@ -105,6 +106,22 @@ namespace Fury.Strings
         {
             Append().Set(obj);
             return this;
+        }
+
+        public object[] ToObjectsArray()
+        {
+            if (_length > _objItems.Length)
+            {
+                _objItems = new object[_length * 2];
+            }
+
+            for (var i = 0; i < _length; i++)
+            {
+                ref var arg = ref _items[i];
+                _objItems[i] = arg.ToObject();
+            }
+
+            return _objItems;
         }
 
         public static implicit operator Args(string[] input)
