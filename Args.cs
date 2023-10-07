@@ -15,7 +15,7 @@ namespace Fury.Strings
             _onChanged = onChanged;
         }
 
-        public Arg this[int index] => _items[index];
+        internal ref Arg this[int index] => ref _items[index];
 
         public Args Clear()
         {
