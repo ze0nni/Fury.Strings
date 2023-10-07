@@ -166,7 +166,7 @@ namespace Fury.Strings
         {
             fixed (char* ptr = this)
             {
-                return GetHashCode(ptr, Length);
+                return Helpers.GetHashCode(ptr, Length);
             }
         }
 
@@ -216,23 +216,6 @@ namespace Fury.Strings
         public static implicit operator StringKey(string str)
         {
             return new StringKey(str);
-        }
-
-        public static int GetHashCode(char* s, int length)
-        {
-            int hash1 = 5381;
-            int hash2 = hash1;
-
-            for (var i = 0; i < length; i++)
-            {
-                hash1 = ((hash1 << 5) + hash1) ^ *s;
-                if (*s == 0)
-                    break;
-                hash2 = ((hash2 << 5) + hash2) ^ *s;
-                s++;
-            }
-
-            return hash1 + (hash2 * 1566083941);
         }
     }
 }

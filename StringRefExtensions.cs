@@ -1,39 +1,62 @@
+using System;
+using System.Runtime.CompilerServices;
+
 namespace Fury.Strings
 {
-    public static class StringRefExtensions
+    public static unsafe class StringRefExtensions
     {
-        public static bool TryParseInt(this ref StringKey key, out int result)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryParseInt(this ref StringRef strRef, out int result)
         {
-            if (key.Length == 0)
+            return Helpers.TryParseInt(strRef._ptr, strRef.Length, out result);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static StringRef Substring(this ref StringRef strRef, int startIndex)
+        {
+            return strRef.Substring(startIndex, strRef.Length - startIndex);
+        }
+
+        public static StringRef Substring(this ref StringRef strRef, int startIndex, int length)
+        {
+            if (startIndex < 0 || startIndex >= strRef.Length)
             {
-                result = default;
-                return false;
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
             }
-            unsafe 
+            if (length < 0)
             {
-                fixed (char* start = key)
-                {
-                    result = 0;
-                    var cursor = start + key.Length;
-                    var m = 1;
-                    while (cursor-- > start)
-                    {
-                        if (*cursor >= '0' && *cursor <= '9')
-                        {
-                            result += m * (*cursor - '0');
-                        } else if (*cursor == '-' && cursor == start)
-                        {
-                            result = -result;
-                        } else
-                        {
-                            result = default;
-                            return false;
-                        }
-                        m *= 10;
-                    }
-                    return true;
-                }
+                throw new ArgumentOutOfRangeException("Must be positive", nameof(length));
             }
+            if (startIndex + length > strRef.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(length));
+            }
+            var c = strRef._ptr + startIndex;
+            return new StringRef(c, length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Contains(this ref StringRef strRef, string value)
+        {
+            return Helpers.Contains(strRef._ptr, strRef.Length, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int IndexOf(this ref StringRef strRef, string value)
+        {
+            return Helpers.IndexOf(strRef._ptr, strRef.Length, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool StartsWith(this ref StringRef strRef, string value)
+        {
+            return Helpers.StartsWith(strRef._ptr, strRef.Length, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool EndsWith(this ref StringRef strRef, string value)
+        {
+            return Helpers.EndsWith(strRef._ptr, strRef.Length, value);
         }
     }
 }

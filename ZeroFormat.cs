@@ -5,8 +5,8 @@ namespace Fury.Strings
 {
     public class ZeroFormat
     {
-        public delegate void VariableProcessorDelegate(StringRef variable, ref FormatBuffer buffer);
-        public delegate void TagProcessorDelegate(bool slash, StringRef value, ref FormatBuffer buffer);
+        public delegate void VariableProcessorDelegate(StringRef variable, FormatBuffer buffer);
+        public delegate void TagProcessorDelegate(bool slash, StringRef value, FormatBuffer buffer);
 
         private char[] _buffer;
         private int _length;
@@ -293,7 +293,7 @@ namespace Fury.Strings
                 fixed (char* valPtr = value)
                 {
                     var valRef = new StringRef(valPtr, value.Length);
-                    processor(slash, valRef, ref buffer);
+                    processor(slash, valRef, buffer);
                 }
             }
             else
@@ -428,7 +428,7 @@ namespace Fury.Strings
                             fixed (char* bodyPtr = body)
                             {
                                 var bodyRef = new StringRef(bodyPtr, body.Length);
-                                _variablesProcessor(bodyRef, ref buffer);
+                                _variablesProcessor(bodyRef, buffer);
                             }
                         }
                         else

@@ -13,6 +13,17 @@ namespace Fury.Strings
             Length = length;
         }
 
+        public char this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= Length)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                var c = _ptr + index;
+                return *c;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal StringKey ToKey()
         {
@@ -32,7 +43,7 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return StringKey.GetHashCode(_ptr, Length);
+            return Helpers.GetHashCode(_ptr, Length);
         }
 
         public override string ToString()
