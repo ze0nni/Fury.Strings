@@ -7,7 +7,7 @@
   },
   "displayName": "FuryStrings",
   "description": "Tools for format strings and html strings with minimum allocations.",
-  "category": "Data management",
+  "category": "Utilities",
   "version": "0.0.1",
   "keywords": [
     "tools",
@@ -16,7 +16,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ze0nni/Fury.Strings.git"
+    "url": "https://github.com/ze0nni/FuryStrings.git"
   },
   "type": "tool"
 }
