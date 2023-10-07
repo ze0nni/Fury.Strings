@@ -2,9 +2,9 @@ using System;
 
 namespace Fury.Strings
 {
-    public static class FormatExtensions
+    public static class ZeroFormatExtensions
     {
-        public static unsafe void Append(this ZeroFormat format, int number, int @base = 10)
+        public static unsafe void Append(this ZeroFormat format, int number, byte @base = 10)
         {
             if (@base < 2 || @base > 10 + 26)
             {
@@ -34,6 +34,11 @@ namespace Fury.Strings
                 number = number / @base;
             }
             format.Append(digits, numDigits);
+        }
+
+        public static unsafe void Append(this ZeroFormat format, float number, sbyte digitsAfterDecimal = -1)
+        {
+            format.Append("Float's not implementes");
         }
     }
 }

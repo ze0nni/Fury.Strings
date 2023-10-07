@@ -8,18 +8,6 @@ namespace Fury.Strings
     [StructLayout(LayoutKind.Explicit)]
     public readonly unsafe struct StringKey : IEquatable<StringKey>, IEquatable<string>
     {
-#if WIN32
-        const int PtrSize = sizeof(int);
-#else
-        const int PtrSize = sizeof(long);
-#endif
-        static StringKey() {
-            if (PtrSize != IntPtr.Size)
-            {
-                throw new Exception($"Excepted IntPtr.Size={PtrSize} but have {IntPtr.Size}");
-            }
-        }
-
         private enum RefType : byte
         {
             Null,
@@ -31,9 +19,9 @@ namespace Fury.Strings
         [FieldOffset(0)] private readonly string _str;
         [FieldOffset(0)] private readonly char[] _chars;
         [FieldOffset(0)] private readonly char* _ptr;
-        [FieldOffset(PtrSize)] private readonly RefType _type;
-        [FieldOffset(PtrSize + sizeof(byte))] private readonly int _start;
-        [FieldOffset(PtrSize + sizeof(byte) + sizeof(int))] public readonly int Length;
+        [FieldOffset(Helpers.PtrSize)] private readonly RefType _type;
+        [FieldOffset(Helpers.PtrSize + sizeof(byte))] private readonly int _start;
+        [FieldOffset(Helpers.PtrSize + sizeof(byte) + sizeof(int))] public readonly int Length;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

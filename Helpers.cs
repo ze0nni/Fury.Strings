@@ -1,9 +1,23 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Fury.Strings
 {
     public static unsafe class Helpers
     {
+#if WIN32
+        public const int PtrSize = sizeof(int);
+#else
+        public const int PtrSize = sizeof(long);
+#endif
+        static Helpers()
+        {
+            if (PtrSize != IntPtr.Size)
+            {
+                throw new Exception($"Excepted IntPtr.Size={PtrSize} but have {IntPtr.Size}");
+            }
+        }
+
         public static int GetHashCode(char* s, int length)
         {
             int hash1 = 5381;

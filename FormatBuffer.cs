@@ -65,7 +65,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Append(int number, int @base = 10)
+        public void Append(int number, byte @base = 10)
         {
             _format.Append(number, @base);
         }

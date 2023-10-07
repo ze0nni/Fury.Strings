@@ -20,7 +20,7 @@ namespace Fury.Strings
         }
 
         private StringKey _format;
-        private string[] _args;
+        private Args _args;
         private VariableProcessorDelegate _variablesProcessor;
         private StringDictionary<string> _colorsMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
@@ -28,7 +28,7 @@ namespace Fury.Strings
         
         public void Setup(
             StringKey format,
-            string[] args = null,
+            Args args = null,
             VariableProcessorDelegate variablesProcessor = null,
             StringDictionary<string> colorsMap = null,
             StringDictionary<(string, string)> tagsAlias = null,
@@ -411,9 +411,9 @@ namespace Fury.Strings
                         if (type == ArgType.Arg)
                         {
                             var argsN = args.Length;
-                            if (body.TryParseInt(out var n) && n >= 0 && n < argsN)
+                            if (body.TryParseInt(out var n) && n >= 0 && n < argsN && args[n].Append(this))
                             {
-                                Append(args[n]);
+                                //
                             }
                             else
                             {
@@ -428,7 +428,7 @@ namespace Fury.Strings
                             fixed (char* bodyPtr = body)
                             {
                                 var bodyRef = new StringRef(bodyPtr, body.Length);
-                                _variablesProcessor(bodyRef, buffer);
+                                _variablesProcessor(bodyRef,  buffer);
                             }
                         }
                         else
