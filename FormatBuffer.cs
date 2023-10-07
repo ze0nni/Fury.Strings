@@ -34,9 +34,9 @@ namespace Fury.Strings
             _format.Append(ref key);
         }
 
-        public void Append(int number)
+        public void Append(int number, int @base = 10)
         {
-            _format.Append(number);
+            _format.Append(number, @base);
         }
     }
 }
