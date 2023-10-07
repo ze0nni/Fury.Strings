@@ -4,8 +4,8 @@ namespace Fury.Strings
 {
     public readonly ref struct FormatBuffer
     {
-        private readonly Format _format;
-        internal FormatBuffer(Format format)
+        private readonly ZeroFormat _format;
+        internal FormatBuffer(ZeroFormat format)
         {
             _format = format;
         }
@@ -20,7 +20,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Process(StringRef str)
+        public unsafe void Process(StringKey str)
         {
             fixed (char* start = str)
             {
@@ -53,10 +53,17 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Append(StringRef key)
+        public void Append(StringKey key)
         {
             _format.Append(ref key);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Append(StringRef keyRef)
+        {
+            _format.Append(keyRef);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Append(int number, int @base = 10)
         {

@@ -3,23 +3,23 @@ using System.Runtime.CompilerServices;
 
 namespace Fury.Strings
 {
-    public class Format
+    public class ZeroFormat
     {
-        public delegate void VariableProcessorDelegate(in StringRef variable, ref FormatBuffer buffer);
-        public delegate void TagProcessorDelegate(bool slash, in StringRef value, ref FormatBuffer buffer);
+        public delegate void VariableProcessorDelegate(StringRef variable, ref FormatBuffer buffer);
+        public delegate void TagProcessorDelegate(bool slash, StringRef value, ref FormatBuffer buffer);
 
         private char[] _buffer;
         private int _length;
 
-        private readonly Lazy<Format> _nestedFormat = new Lazy<Format>(() => new Format(128));
+        private readonly Lazy<ZeroFormat> _nestedFormat = new Lazy<ZeroFormat>(() => new ZeroFormat(128));
         
-        public Format(int capactity)
+        public ZeroFormat(int capactity)
         {
             _buffer = new char[capactity];
             _length = 0;
         }
 
-        private StringRef _format;
+        private StringKey _format;
         private string[] _args;
         private VariableProcessorDelegate _variablesProcessor;
         private StringDictionary<string> _colorsMap;
@@ -27,7 +27,7 @@ namespace Fury.Strings
         public StringDictionary<TagProcessorDelegate> _tagsProcessor;
         
         public void Setup(
-            StringRef format,
+            StringKey format,
             string[] args = null,
             VariableProcessorDelegate variablesProcessor = null,
             StringDictionary<string> colorsMap = null,
@@ -52,14 +52,14 @@ namespace Fury.Strings
             return new string(_buffer, 0, _length);
         }
 
-        public unsafe StringRef ToStringRef()
+        public unsafe StringKey ToStringKey()
         {
             _length = 0;
             fixed (char* start = _format)
             {
                 Process(start, _format.Length);
             }
-            return new StringRef(_buffer, 0, _length);
+            return new StringKey(_buffer, 0, _length);
         }
         
         private void EnsureCapacity()
@@ -116,7 +116,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Append(ref StringRef key)
+        internal void Append(ref StringKey key)
         {
             unsafe
             {
@@ -125,6 +125,12 @@ namespace Fury.Strings
                     Append(ptr, key.Length);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe void Append(StringRef keyRef)
+        {
+            Append(keyRef._ptr, keyRef.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -166,9 +172,9 @@ namespace Fury.Strings
             var state = ParseTagState.Open;
 
             var slash = default(bool);
-            var name = default(StringRef);
+            var name = default(StringKey);
             var nameHasArgs = false;
-            var value = default(StringRef);
+            var value = default(StringKey);
             var valueHasArgs = false;
 
             var revert = cursor;
@@ -212,14 +218,14 @@ namespace Fury.Strings
                         if (*cursor == '=')
                         {
                             state = ParseTagState.Value;
-                            name = new StringRef(pStart, 0, pLength);
+                            name = new StringKey(pStart, 0, pLength);
                             pStart = cursor+1;
                             pLength = 0;
                             if (*pStart == '{') valueHasArgs = true;
                         } else if (*cursor == '>')
                         {
                             state = ParseTagState.Close;
-                            name = new StringRef(pStart, 0, pLength);
+                            name = new StringKey(pStart, 0, pLength);
                             cursor++;
                         }
                         else
@@ -233,7 +239,7 @@ namespace Fury.Strings
                         if (*cursor == '>')
                         {
                             state = ParseTagState.Close;
-                            value = new StringRef(pStart, 0, pLength);
+                            value = new StringKey(pStart, 0, pLength);
                             cursor++;
                         }
                         else
@@ -249,7 +255,7 @@ namespace Fury.Strings
             {
                 var nestedFormat = _nestedFormat.Value;
                 nestedFormat.Setup(name, args: _args, variablesProcessor: _variablesProcessor);
-                name = nestedFormat.ToStringRef();
+                name = nestedFormat.ToStringKey();
             }
 
             if (name == "color" && _colorsMap != null && _colorsMap.TryGetValue(value, out var color))
@@ -283,9 +289,13 @@ namespace Fury.Strings
                 {
                     var nestedFormat = _nestedFormat.Value;
                     nestedFormat.Setup(value, args: _args, variablesProcessor: _variablesProcessor);
-                    value = nestedFormat.ToStringRef();
+                    value = nestedFormat.ToStringKey();
                 }
-                processor(slash, value, ref buffer);
+                fixed (char* valPtr = value)
+                {
+                    var valRef = new StringRef(valPtr, value.Length);
+                    processor(slash, valRef, ref buffer);
+                }
             }
             else
             {
@@ -329,7 +339,7 @@ namespace Fury.Strings
 
             var pStart = cursor;
             var pLength = 0;
-            var body = default(StringRef);
+            var body = default(StringKey);
 
             var args = _args;
             var variablesProcessor = _variablesProcessor;
@@ -378,7 +388,7 @@ namespace Fury.Strings
                             else if (*cursor == '}')
                             {
                                 state = ParseArgState.Close;
-                                body = new StringRef(pStart, 0, pLength);
+                                body = new StringKey(pStart, 0, pLength);
                                 cursor++;
                             }
                             else
@@ -417,7 +427,11 @@ namespace Fury.Strings
                         else if (type == ArgType.Variable)
                         {
                             var buffer = new FormatBuffer(this);
-                            _variablesProcessor(in body, ref buffer);
+                            fixed (char* bodyPtr = body)
+                            {
+                                var bodyRef = new StringRef(bodyPtr, body.Length);
+                                _variablesProcessor(bodyRef, ref buffer);
+                            }
                         }
                         else
                         {

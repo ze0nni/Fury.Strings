@@ -7,7 +7,7 @@ namespace Fury.Strings
 {
     public sealed class StringDictionary<TValue> : IDictionary<string, TValue>
     {
-        private readonly Dictionary<StringRef, TValue> _origin = new Dictionary<StringRef, TValue>();
+        private readonly Dictionary<StringKey, TValue> _origin = new Dictionary<StringKey, TValue>();
 
         public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
         {
@@ -24,7 +24,7 @@ namespace Fury.Strings
 
         public void Add(KeyValuePair<string, TValue> item)
         {
-            _origin.Add(new StringRef(item.Key), item.Value);
+            _origin.Add(new StringKey(item.Key), item.Value);
         }
 
         public void Clear()
@@ -34,7 +34,7 @@ namespace Fury.Strings
 
         public bool Contains(KeyValuePair<string, TValue> item)
         {
-            return _origin.TryGetValue(new StringRef(item.Key), out var value) && value.Equals(item.Value);
+            return _origin.TryGetValue(new StringKey(item.Key), out var value) && value.Equals(item.Value);
         }
 
         public void CopyTo(KeyValuePair<string, TValue>[] array, int arrayIndex)
@@ -44,8 +44,8 @@ namespace Fury.Strings
 
         public bool Remove(KeyValuePair<string, TValue> item)
         {
-            var id = (IDictionary<StringRef, TValue>)_origin;
-            return id.Remove(new KeyValuePair<StringRef, TValue>(new StringRef(item.Key), item.Value));
+            var id = (IDictionary<StringKey, TValue>)_origin;
+            return id.Remove(new KeyValuePair<StringKey, TValue>(new StringKey(item.Key), item.Value));
         }
 
         public int Count => _origin.Count;
@@ -53,64 +53,73 @@ namespace Fury.Strings
 
         public void Add(string key, TValue value)
         {
-            _origin.Add(new StringRef(key), value);
+            _origin.Add(new StringKey(key), value);
         }
 
         public bool Remove(string key)
         {
-            return _origin.Remove(new StringRef(key));
+            return _origin.Remove(new StringKey(key));
         }
 
         public bool ContainsKey(string key) 
-            => _origin.ContainsKey(new StringRef(key));
+            => _origin.ContainsKey(new StringKey(key));
 
         public bool ContainsKey(string key, int start, int length) =>
-            _origin.ContainsKey(new StringRef(key, start, length));
+            _origin.ContainsKey(new StringKey(key, start, length));
 
         public bool ContainsKey(char[] chars, int start, int length) =>
-            _origin.ContainsKey(new StringRef(chars, start, length));
+            _origin.ContainsKey(new StringKey(chars, start, length));
 
         public unsafe bool ContainsKey(char* ptr, int start, int length) =>
-            _origin.ContainsKey(new StringRef(ptr, start, length));
+            _origin.ContainsKey(new StringKey(ptr, start, length));
 
-        public bool ContainsKey(StringRef key) =>
+        public bool ContainsKey(StringKey key) =>
             _origin.ContainsKey(key);
+
+        public bool ContainsKey(StringRef keyRef) =>
+            _origin.ContainsKey(keyRef.ToKey());
+
 
         public bool TryGetValue(string key, out TValue value)
         {
-            return _origin.TryGetValue(new StringRef(key), out value);
+            return _origin.TryGetValue(new StringKey(key), out value);
         }
 
         public bool TryGetValue(string str, int start, int length, out TValue value)
         {
-            return _origin.TryGetValue(new StringRef(str, start, length), out value);
+            return _origin.TryGetValue(new StringKey(str, start, length), out value);
         }
 
         public bool TryGetValue(char[] chars, int start, int length, out TValue value)
         {
-            return _origin.TryGetValue(new StringRef(chars, start, length), out value);
+            return _origin.TryGetValue(new StringKey(chars, start, length), out value);
         }
 
         public unsafe bool TryGetValue(char* ptr, int start, int length, out TValue value)
         {
-            return _origin.TryGetValue(new StringRef(ptr, start, length), out value);
+            return _origin.TryGetValue(new StringKey(ptr, start, length), out value);
         }
         
-        public bool TryGetValue(StringRef key, out TValue value)
+        public bool TryGetValue(StringKey key, out TValue value)
         {
             return _origin.TryGetValue(key, out value);
         }
 
-        public TValue this[string key]
+        public bool TryGetValue(StringRef keyRef, out TValue value)
         {
-            get => _origin[new StringRef(key)];
-            set => _origin[new StringRef(key)] = value;
+            return _origin.TryGetValue(keyRef.ToKey(), out value);
         }
 
-        public TValue this[string str, int start, int length] => _origin[new StringRef(str, start, length)];
-        public TValue this[char[] chars, int start, int length] => _origin[new StringRef(chars, start, length)];
-        public unsafe TValue this[char* ptr, int start, int length] => _origin[new StringRef(ptr, start, length)];
-        public TValue this[StringRef key] => _origin[key];
+        public TValue this[string key]
+        {
+            get => _origin[new StringKey(key)];
+            set => _origin[new StringKey(key)] = value;
+        }
+
+        public TValue this[string str, int start, int length] => _origin[new StringKey(str, start, length)];
+        public TValue this[char[] chars, int start, int length] => _origin[new StringKey(chars, start, length)];
+        public unsafe TValue this[char* ptr, int start, int length] => _origin[new StringKey(ptr, start, length)];
+        public TValue this[StringKey key] => _origin[key];
 
         public ICollection<string> Keys => _origin.Keys.Select(x => x.ToString()).ToArray();
         public ICollection<TValue> Values => _origin.Values;

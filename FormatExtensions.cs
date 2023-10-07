@@ -4,7 +4,7 @@ namespace Fury.Strings
 {
     public static class FormatExtensions
     {
-        public static unsafe void Append(this Format format, int number, int @base = 10)
+        public static unsafe void Append(this ZeroFormat format, int number, int @base = 10)
         {
             if (@base < 2 || @base > 10 + 26)
             {

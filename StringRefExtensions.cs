@@ -2,7 +2,7 @@ namespace Fury.Strings
 {
     public static class StringRefExtensions
     {
-        public static bool TryParseInt(this ref StringRef key, out int result)
+        public static bool TryParseInt(this ref StringKey key, out int result)
         {
             if (key.Length == 0)
             {
