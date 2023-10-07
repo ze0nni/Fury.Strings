@@ -212,6 +212,12 @@ namespace Fury.Strings
             return !a.Equals(b);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator StringRef(string str)
+        {
+            return new StringRef(str);
+        }
+
         public static int GetHashCode(char* s, int length)
         {
             int hash1 = 5381;
