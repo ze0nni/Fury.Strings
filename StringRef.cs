@@ -35,6 +35,11 @@ namespace Fury.Strings
             return StringKey.GetHashCode(_ptr, Length);
         }
 
+        public override string ToString()
+        {
+            return new string(_ptr, 0, Length);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(StringRef ref0, StringRef ref1)
         {
