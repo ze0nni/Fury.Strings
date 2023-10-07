@@ -166,7 +166,6 @@ namespace Fury.Strings
             Close
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void ParseTag(ref char* cursor, char* end)
         {
             var state = ParseTagState.Open;
@@ -329,7 +328,6 @@ namespace Fury.Strings
             Variable
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void ParseArg(ref char* cursor, char* end)
         {
             var state = ParseArgState.Open;
