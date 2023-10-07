@@ -1,64 +1,96 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Fury.Strings
 {
-    public readonly unsafe struct StringKey : IEquatable<StringKey>, IEquatable<string>
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly unsafe struct StringRef : IEquatable<StringRef>, IEquatable<string>
     {
-        private readonly string _str;
-        private readonly char[] _chars;
-        private readonly char* _ptr;
-        private readonly int _start;
-        public readonly int Length;
+#if WIN32
+        const int PtrSize = sizeof(int);
+#else
+        const int PtrSize = sizeof(long);
+#endif
+        static StringRef() {
+            if (PtrSize != IntPtr.Size)
+            {
+                throw new Exception($"Excepted IntPtr.Size={PtrSize} but have {IntPtr.Size}");
+            }
+        }
+
+        private enum RefType : byte
+        {
+            Null,
+            Str,
+            Chars,
+            Ptr
+        }
+
+        [FieldOffset(0)] private readonly string _str;
+        [FieldOffset(0)] private readonly char[] _chars;
+        [FieldOffset(0)] private readonly char* _ptr;
+        [FieldOffset(PtrSize)] private readonly RefType _type;
+        [FieldOffset(PtrSize + sizeof(byte))] private readonly int _start;
+        [FieldOffset(PtrSize + sizeof(byte) + sizeof(int))] public readonly int Length;
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StringKey(string str)
+        public StringRef(string str)
         {
             if (str == null)
                 throw new ArgumentNullException(nameof(str));
-            _str = str;
             _chars = null;
             _ptr = null;
+
+            _type = RefType.Str;
+            _str = str;
             _start = 0;
-            Length = _str.Length;
+            Length = str.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StringKey(string str, int start, int length)
+        public StringRef(string str, int start, int length)
         {
             if (str == null)
                 throw new ArgumentNullException(nameof(str));
             if (start < 0 || start + length >= str.Length)
                 throw new ArgumentOutOfRangeException();
-            _str = str;
             _chars = null;
             _ptr = null;
+
+            _type = RefType.Str;
+            _str = str;
             _start = start;
             Length = length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StringKey(char[] chars, int start, int length)
+        public StringRef(char[] chars, int start, int length)
         {
             if (chars == null)
                 throw new ArgumentNullException(nameof(chars));
             if (start < 0 || start + length >= chars.Length)
                 throw new ArgumentOutOfRangeException();
             _str = null;
-            _chars = chars;
             _ptr = null;
+
+            _type = RefType.Chars;
+            _chars = chars;
             _start = start;
             Length = length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StringKey(char* ptr, int start, int length)
+        public StringRef(char* ptr, int start, int length)
         {
             if (ptr == null)
                 throw new ArgumentNullException(nameof(ptr));
             _str = null;
             _chars = null;
+
+            _type = RefType.Ptr;
             _ptr = ptr;
             _start = start;
             Length = length;
@@ -67,27 +99,36 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe ref readonly char GetPinnableReference()
         {
-            if (_str != null) fixed (char* s = _str) return ref UnsafeUtility.AsRef<char>(s + _start);
-            if (_chars != null) fixed (char* s = _chars) return ref UnsafeUtility.AsRef<char>(s + _start);
-            if (_ptr != null) return ref UnsafeUtility.AsRef<char>(_ptr + _start);
-            return ref UnsafeUtility.AsRef<char>(IntPtr.Zero.ToPointer());
+            if (Length == 0)
+            {
+                return ref UnsafeUtility.AsRef<char>(IntPtr.Zero.ToPointer());
+            }
+            switch (_type)
+            {
+                case RefType.Str:
+                    fixed (char* s = _str) return ref UnsafeUtility.AsRef<char>(s + _start);
+                case RefType.Chars:
+                    fixed (char* s = _chars) return ref UnsafeUtility.AsRef<char>(s + _start);
+                case RefType.Ptr:
+                    return ref UnsafeUtility.AsRef<char>(_ptr + _start);
+                default:
+                    throw new ArgumentOutOfRangeException(_type.ToString(), nameof(_type));
+            }
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(StringKey other)
+        public bool Equals(StringRef other)
         {
             if (this.Length != other.Length)
             {
                 return false;
             }
 
-            if (this.Length == 0 && other.Length == 0)
+            if (Length == 0)
             {
                 return true;
             }
-
-            
 
             fixed(char* p0 = this, p1 = other)
             {
@@ -112,13 +153,13 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(string other)
         {
-            return Equals(new StringKey(other));
+            return Equals(new StringRef(other));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
         {
-            return obj is StringKey other && Equals(other);
+            return obj is StringRef other && Equals(other);
         }
 
         public override int GetHashCode()
@@ -148,25 +189,25 @@ namespace Fury.Strings
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(StringKey a, StringKey b)
+        public static bool operator ==(StringRef a, StringRef b)
         {
             return a.Equals(b);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(StringKey a, StringKey b)
+        public static bool operator !=(StringRef a, StringRef b)
         {
             return !a.Equals(b);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(StringKey a, string b)
+        public static bool operator ==(StringRef a, string b)
         {
             return a.Equals(b);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(StringKey a, string b)
+        public static bool operator !=(StringRef a, string b)
         {
             return !a.Equals(b);
         }

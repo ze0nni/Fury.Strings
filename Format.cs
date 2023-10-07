@@ -5,8 +5,8 @@ namespace Fury.Strings
 {
     public class Format
     {
-        public delegate void VariableProcessorDelegate(in StringKey variable, ref FormatBuffer buffer);
-        public delegate void TagProcessorDelegate(in StringKey value, ref FormatBuffer buffer);
+        public delegate void VariableProcessorDelegate(in StringRef variable, ref FormatBuffer buffer);
+        public delegate void TagProcessorDelegate(in StringRef value, ref FormatBuffer buffer);
 
         private char[] _buffer;
         private int _length;
@@ -101,7 +101,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Append(ref StringKey key)
+        internal void Append(ref StringRef key)
         {
             unsafe
             {
@@ -159,8 +159,8 @@ namespace Fury.Strings
             var state = ParseTagState.Open;
 
             var slash = default(bool);
-            var name = default(StringKey);
-            var value = default(StringKey);
+            var name = default(StringRef);
+            var value = default(StringRef);
 
             var revert = cursor;
             
@@ -202,13 +202,13 @@ namespace Fury.Strings
                         if (*cursor == '=')
                         {
                             state = ParseTagState.Value;
-                            name = new StringKey(pStart, 0, pLength);
+                            name = new StringRef(pStart, 0, pLength);
                             pStart = cursor+1;
                             pLength = 0;
                         } else if (*cursor == '>')
                         {
                             state = ParseTagState.Close;
-                            name = new StringKey(pStart, 0, pLength);
+                            name = new StringRef(pStart, 0, pLength);
                             cursor++;
                         }
                         else
@@ -221,7 +221,7 @@ namespace Fury.Strings
                         if (*cursor == '>')
                         {
                             state = ParseTagState.Close;
-                            value = new StringKey(pStart, 0, pLength);
+                            value = new StringRef(pStart, 0, pLength);
                             cursor++;
                         }
                         else
@@ -296,7 +296,7 @@ namespace Fury.Strings
 
             var pStart = cursor;
             var pLength = 0;
-            var body = default(StringKey);
+            var body = default(StringRef);
 
             var args = _args;
             var variablesProcessor = _variablesProcessor;
@@ -345,7 +345,7 @@ namespace Fury.Strings
                             else if (*cursor == '}')
                             {
                                 state = ParseArgState.Close;
-                                body = new StringKey(pStart, 0, pLength);
+                                body = new StringRef(pStart, 0, pLength);
                                 cursor++;
                             }
                             else

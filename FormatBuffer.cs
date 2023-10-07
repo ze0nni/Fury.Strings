@@ -29,7 +29,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Append(StringKey key)
+        public void Append(StringRef key)
         {
             _format.Append(ref key);
         }
