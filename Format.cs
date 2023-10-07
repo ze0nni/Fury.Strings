@@ -5,6 +5,8 @@ namespace Fury.Strings
 {
     public class Format
     {
+        public delegate void TagProcessorDelegate(in StringKey value, ref FormatBuffer buffer);
+
         private char[] _buffer;
         private int _length;
         
@@ -18,20 +20,20 @@ namespace Fury.Strings
         private string[] _args;
         private StringDictionary<string> _colorMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
-        public StringDictionary<Func<StringKey, string>> _mappedTags;
+        public StringDictionary<TagProcessorDelegate> _tagProcessors;
         
         public void Setup(
             string format,
             string[] args = null,
             StringDictionary<string> colorMap = null,
             StringDictionary<(string, string)> tagsAlias = null,
-            StringDictionary<Func<StringKey, string>> mappedTags = null)
+            StringDictionary<TagProcessorDelegate> tagProcessors = null)
         {
             _format = format;
             _args = args;
             _colorMap = colorMap;
             _tagsAlias = tagsAlias;
-            _mappedTags = mappedTags;
+            _tagProcessors = tagProcessors;
         }
         
         public override string ToString()
@@ -49,7 +51,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Append(char c)
+        internal void Append(char c)
         {
             if (_length == _buffer.Length)
             {
@@ -66,7 +68,7 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void Append(char* src, int length)
+        internal unsafe void Append(char* src, int length)
         {
             var finalLength = _length + length;
             if (finalLength >= _buffer.Length)
@@ -83,20 +85,26 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void Append(string str)
+        internal void Append(string str)
         {
-            fixed (char* cursor = str)
+            unsafe
             {
-                Append(cursor, str.Length);
+                fixed (char* cursor = str)
+                {
+                    Append(cursor, str.Length);
+                }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void Append(ref StringKey key)
+        internal void Append(ref StringKey key)
         {
-            fixed (char* ptr = key)
+            unsafe
             {
-                Append(ptr, key.Length);
+                fixed (char* ptr = key)
+                {
+                    Append(ptr, key.Length);
+                }
             }
         }
 
@@ -111,7 +119,7 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void Process(char* start, int size)
         {
-            var parseHtml = _colorMap != null || _tagsAlias != null || _mappedTags != null;
+            var parseHtml = _colorMap != null || _tagsAlias != null || _tagProcessors != null;
             var parseArgs = _args != null;
 
             var cursor = start;
@@ -237,9 +245,10 @@ namespace Fury.Strings
                 {
                     Append(alias.close);
                 }
-            } else if (_mappedTags != null && _mappedTags.TryGetValue(name, out var resolver))
+            } else if (_tagProcessors != null && _tagProcessors.TryGetValue(name, out var processor))
             {
-                Append(resolver(value));
+                var buffer = new FormatBuffer(this);
+                processor(value, ref buffer);
             }
             else
             {
