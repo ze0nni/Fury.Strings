@@ -6,7 +6,7 @@ namespace Fury.Strings
     public class Format
     {
         public delegate void VariableProcessorDelegate(in StringRef variable, ref FormatBuffer buffer);
-        public delegate void TagProcessorDelegate(in StringRef value, ref FormatBuffer buffer);
+        public delegate void TagProcessorDelegate(bool slash, in StringRef value, ref FormatBuffer buffer);
 
         private char[] _buffer;
         private int _length;
@@ -20,30 +20,33 @@ namespace Fury.Strings
         private string _format;
         private string[] _args;
         private VariableProcessorDelegate _variablesProcessor;
-        private StringDictionary<string> _colorMap;
+        private StringDictionary<string> _colorsMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
-        public StringDictionary<TagProcessorDelegate> _tagProcessors;
+        public StringDictionary<TagProcessorDelegate> _tagsProcessor;
         
         public void Setup(
             string format,
             string[] args = null,
             VariableProcessorDelegate variablesProcessor = null,
-            StringDictionary<string> colorMap = null,
+            StringDictionary<string> colorsMap = null,
             StringDictionary<(string, string)> tagsAlias = null,
-            StringDictionary<TagProcessorDelegate> tagProcessors = null)
+            StringDictionary<TagProcessorDelegate> tagsProcessor = null)
         {
             _format = format;
             _args = args;
             _variablesProcessor = variablesProcessor;
-            _colorMap = colorMap;
+            _colorsMap = colorsMap;
             _tagsAlias = tagsAlias;
-            _tagProcessors = tagProcessors;
+            _tagsProcessor = tagsProcessor;
         }
         
-        public override string ToString()
+        public override unsafe string ToString()
         {
             _length = 0;
-            Process(_format);
+            fixed (char* start = _format)
+            {
+                Process(start, _format.Length);
+            }
             return new string(_buffer, 0, _length);
         }
         
@@ -112,18 +115,10 @@ namespace Fury.Strings
             }
         }
 
-        private unsafe void Process(string format)
-        {
-            fixed (char* start = format)
-            {
-                Process(start, format.Length);
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void Process(char* start, int size)
+        internal unsafe void Process(char* start, int size)
         {
-            var parseHtml = _colorMap != null || _tagsAlias != null || _tagProcessors != null;
+            var parseHtml = _colorsMap != null || _tagsAlias != null || _tagsProcessor != null;
             var parseArgs = _args != null || _variablesProcessor != null;
 
             var cursor = start;
@@ -231,7 +226,7 @@ namespace Fury.Strings
                         break;
                 }
             }
-            if (name == "color" && _colorMap != null && _colorMap.TryGetValue(value, out var color))
+            if (name == "color" && _colorsMap != null && _colorsMap.TryGetValue(value, out var color))
             {
                 Append('<');
                 Append(ref name);
@@ -249,10 +244,10 @@ namespace Fury.Strings
                 {
                     Append(alias.close);
                 }
-            } else if (_tagProcessors != null && _tagProcessors.TryGetValue(name, out var processor))
+            } else if (_tagsProcessor != null && _tagsProcessor.TryGetValue(name, out var processor))
             {
                 var buffer = new FormatBuffer(this);
-                processor(value, ref buffer);
+                processor(slash, value, ref buffer);
             }
             else
             {

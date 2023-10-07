@@ -11,6 +11,30 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Process(string str)
+        {
+            fixed (char* start = str)
+            {
+                _format.Process(start, str.Length);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Process(StringRef str)
+        {
+            fixed (char* start = str)
+            {
+                _format.Process(start, str.Length);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Process(char* start, int length)
+        {
+            _format.Process(start, length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Append(char c)
         {
             _format.Append(c);
@@ -33,7 +57,7 @@ namespace Fury.Strings
         {
             _format.Append(ref key);
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Append(int number, int @base = 10)
         {
             _format.Append(number, @base);

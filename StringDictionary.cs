@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Fury.Strings
 {
-    public class StringDictionary<TValue> : IDictionary<string, TValue>
+    public sealed class StringDictionary<TValue> : IDictionary<string, TValue>
     {
         private readonly Dictionary<StringRef, TValue> _origin = new Dictionary<StringRef, TValue>();
 
