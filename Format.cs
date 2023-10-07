@@ -167,6 +167,7 @@ namespace Fury.Strings
 
             var slash = default(bool);
             var name = default(StringRef);
+            var nameHasArgs = false;
             var value = default(StringRef);
             var valueHasArgs = false;
 
@@ -203,6 +204,7 @@ namespace Fury.Strings
                             state = ParseTagState.Name;
                             pStart = cursor;
                             pLength = 1;
+                            if (*pStart == '{') nameHasArgs = true;
                         }
                         break;
 
@@ -222,6 +224,7 @@ namespace Fury.Strings
                         }
                         else
                         {
+                            if (*cursor == '{') nameHasArgs = true;
                             pLength++;
                         }
                         break;
@@ -241,6 +244,14 @@ namespace Fury.Strings
                         break;
                 }
             }
+
+            if (nameHasArgs)
+            {
+                var nestedFormat = _nestedFormat.Value;
+                nestedFormat.Setup(name, args: _args, variablesProcessor: _variablesProcessor);
+                name = nestedFormat.ToStringRef();
+            }
+
             if (name == "color" && _colorsMap != null && _colorsMap.TryGetValue(value, out var color))
             {
                 Append('<');
@@ -268,16 +279,13 @@ namespace Fury.Strings
             } else if (_tagsProcessor != null && _tagsProcessor.TryGetValue(name, out var processor))
             {
                 var buffer = new FormatBuffer(this);
-                if (!valueHasArgs)
-                {
-                    processor(slash, value, ref buffer);
-                } else
+                if (valueHasArgs)
                 {
                     var nestedFormat = _nestedFormat.Value;
                     nestedFormat.Setup(value, args: _args, variablesProcessor: _variablesProcessor);
-                    var formattedValue = nestedFormat.ToStringRef();
-                    processor(slash, formattedValue, ref buffer);
+                    value = nestedFormat.ToStringRef();
                 }
+                processor(slash, value, ref buffer);
             }
             else
             {
