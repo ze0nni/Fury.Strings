@@ -5,6 +5,7 @@ namespace Fury.Strings
 {
     public class Format
     {
+        public delegate void VariableProcessorDelegate(in StringKey variable, ref FormatBuffer buffer);
         public delegate void TagProcessorDelegate(in StringKey value, ref FormatBuffer buffer);
 
         private char[] _buffer;
@@ -18,6 +19,7 @@ namespace Fury.Strings
 
         private string _format;
         private string[] _args;
+        private VariableProcessorDelegate _variablesProcessor;
         private StringDictionary<string> _colorMap;
         public StringDictionary<(string open, string close)> _tagsAlias;
         public StringDictionary<TagProcessorDelegate> _tagProcessors;
@@ -25,12 +27,14 @@ namespace Fury.Strings
         public void Setup(
             string format,
             string[] args = null,
+            VariableProcessorDelegate variablesProcessor = null,
             StringDictionary<string> colorMap = null,
             StringDictionary<(string, string)> tagsAlias = null,
             StringDictionary<TagProcessorDelegate> tagProcessors = null)
         {
             _format = format;
             _args = args;
+            _variablesProcessor = variablesProcessor;
             _colorMap = colorMap;
             _tagsAlias = tagsAlias;
             _tagProcessors = tagProcessors;
@@ -120,7 +124,7 @@ namespace Fury.Strings
         private unsafe void Process(char* start, int size)
         {
             var parseHtml = _colorMap != null || _tagsAlias != null || _tagProcessors != null;
-            var parseArgs = _args != null;
+            var parseArgs = _args != null || _variablesProcessor != null;
 
             var cursor = start;
             var end = start + size;
@@ -275,16 +279,27 @@ namespace Fury.Strings
             Revert
         }
 
+        public enum ArgType
+        {
+            None,
+            Arg,
+            Variable
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void ParseArg(ref char* cursor, char* end)
         {
             var state = ParseArgState.Open;
+            var type = ArgType.None;
 
             var revert = cursor;
 
             var pStart = cursor;
             var pLength = 0;
             var body = default(StringKey);
+
+            var args = _args;
+            var variablesProcessor = _variablesProcessor;
 
             while (state != ParseArgState.Close && state != ParseArgState.Revert)
             {
@@ -297,12 +312,21 @@ namespace Fury.Strings
                 {
                     case ParseArgState.Open:
                         {
-                            if (*cursor >= '0' && *cursor <= '9')
+                            if (args != null && *cursor >= '0' && *cursor <= '9')
                             {
                                 state = ParseArgState.Body;
+                                type = ArgType.Arg;
                                 pStart = cursor;
                                 pLength = 1;
-                            } else
+                            }
+                            else if (variablesProcessor != null && char.IsLetter(*cursor))
+                            {
+                                state = ParseArgState.Body;
+                                type = ArgType.Variable;
+                                pStart = cursor;
+                                pLength = 1;
+                            }
+                            else 
                             {
                                 state = ParseArgState.Revert;
                             }
@@ -311,6 +335,10 @@ namespace Fury.Strings
                     case ParseArgState.Body:
                         {
                             if (*cursor >= '0' && *cursor <= '9')
+                            {
+                                pLength++;
+                            } else if (type == ArgType.Variable 
+                                && (char.IsLetter(*cursor) || *cursor == '_' || *cursor == '-'))
                             {
                                 pLength++;
                             }
@@ -339,16 +367,28 @@ namespace Fury.Strings
                     break;
                 case ParseArgState.Close:
                     {
-                        var args = _args;
-                        var argsN = args.Length;
-                        if (body.TryParseInt(out var n) && n >= 0 && n < argsN)
+                        if (type == ArgType.Arg)
                         {
-                            Append(args[n]);
-                        } else
+                            var argsN = args.Length;
+                            if (body.TryParseInt(out var n) && n >= 0 && n < argsN)
+                            {
+                                Append(args[n]);
+                            }
+                            else
+                            {
+                                Append("{");
+                                Append(ref body);
+                                Append("}");
+                            }
+                        }
+                        else if (type == ArgType.Variable)
                         {
-                            Append("{");
-                            Append(ref body);
-                            Append("}");
+                            var buffer = new FormatBuffer(this);
+                            _variablesProcessor(in body, ref buffer);
+                        }
+                        else
+                        {
+                            throw new NotImplementedException(type.ToString());
                         }
                     }
                     break;
