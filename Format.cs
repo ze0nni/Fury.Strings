@@ -238,11 +238,17 @@ namespace Fury.Strings
             {
                 if (!slash)
                 {
-                    Append(alias.open);
+                    fixed (char* p = alias.open)
+                    {
+                        Process(p, alias.open.Length);
+                    }
                 }
                 else
                 {
-                    Append(alias.close);
+                    fixed (char* p = alias.close)
+                    {
+                        Process(p, alias.close.Length);
+                    }
                 }
             } else if (_tagsProcessor != null && _tagsProcessor.TryGetValue(name, out var processor))
             {
