@@ -18,6 +18,14 @@ namespace Fury.Strings
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T AsRef<T>(void* source) where T : unmanaged
+#if NET_DOTS || UNITY_2020_1_OR_NEWER
+            => ref Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AsRef<T>(source);
+#else
+            => ref System.Runtime.CompilerServices.Unsafe.AsRef<T>(source);
+#endif
+        
         public static int GetHashCode(char* s, int length)
         {
             int hash1 = 5381;

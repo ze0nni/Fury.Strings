@@ -89,21 +89,21 @@ namespace Fury.Strings
         {
             if (Length == 0)
             {
-                return ref UnsafeUtility.AsRef<char>(IntPtr.Zero.ToPointer());
+                return ref Helpers.AsRef<char>(IntPtr.Zero.ToPointer());
             }
             switch (_type)
             {
                 case RefType.Str:
-                    fixed (char* s = _str) return ref UnsafeUtility.AsRef<char>(s + _start);
+                    fixed (char* s = _str) return ref Helpers.AsRef<char>(s + _start);
                 case RefType.Chars:
-                    fixed (char* s = _chars) return ref UnsafeUtility.AsRef<char>(s + _start);
+                    fixed (char* s = _chars) return ref Helpers.AsRef<char>(s + _start);
                 case RefType.Ptr:
-                    return ref UnsafeUtility.AsRef<char>(_ptr + _start);
+                    return ref Helpers.AsRef<char>(_ptr + _start);
                 default:
                     throw new ArgumentOutOfRangeException(_type.ToString(), nameof(_type));
             }
         }
-
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(StringKey other)
