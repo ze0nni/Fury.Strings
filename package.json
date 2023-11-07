@@ -8,7 +8,7 @@
   "displayName": "FuryStrings",
   "description": "Tools for format strings and html strings with minimum allocations.",
   "category": "Utilities",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [
     "tools",
     "text",

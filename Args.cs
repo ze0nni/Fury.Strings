@@ -6,27 +6,38 @@ namespace Fury.Strings
     public sealed class Args
     {
         private readonly Action _onChanged;
+        private bool _onChangedTriggered;
         private Arg[] _items = new Arg[8];
         private object[] _objItems = new object[8];
         private int _length;
         public int Length => _length;
 
-        public Args(Action onChanged = null)
+        public Args(out Action clear, Action onChanged = null)
         {
+            clear = Clear;
             _onChanged = onChanged;
         }
 
         internal ref Arg this[int index] => ref _items[index];
 
-        public Args Clear()
+        internal void Clear()
         {
             if (_length == 0)
             {
-                return this;
+                return;
             }
             _length = 0;
-            _onChanged?.Invoke();
-            return this;
+            _onChangedTriggered = false;
+        }
+
+        void NotifyChanged()
+        {
+            if (_onChangedTriggered)
+            {
+                return;
+            }
+            _onChangedTriggered = true;
+            _onChanged.Invoke();
         }
 
         private ref Arg Append()
@@ -36,6 +47,7 @@ namespace Fury.Strings
                 var newItems = new Arg[_items.Length * 2];
                 Array.Copy(_items, newItems, _items.Length);
                 _items = newItems;
+                NotifyChanged();
             }
             return ref _items[_length++];
         }
@@ -43,21 +55,30 @@ namespace Fury.Strings
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Bool(bool b)
         {
-            Append().Bool(b);
+            if (Append().Bool(b))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Char(char c)
         {
-            Append().Char(c);
+            if (Append().Char(c))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args CharRepeat(char c, short repeat)
         {
-            Append().Char(c, repeat);
+            if (Append().Char(c, repeat))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
@@ -68,7 +89,10 @@ namespace Fury.Strings
             {
                 throw new ArgumentNullException(nameof(str));
             }
-            Append().Str(str);
+            if (Append().Str(str))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
@@ -83,49 +107,70 @@ namespace Fury.Strings
             {
                 throw new ArgumentOutOfRangeException();
             }
-            Append().StrRange(str, start, length);
+            if (Append().StrRange(str, start, length))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Int(int number, byte @base = 10)
         {
-            Append().Int(number, @base);
+            if (Append().Int(number, @base))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Float(float number, sbyte maxDigitsAfterDecimal = 2)
         {
-            Append().Float(number, maxDigitsAfterDecimal);
+            if (Append().Float(number, maxDigitsAfterDecimal))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args FloatFixed(float number, sbyte fixedAfterDecimal = 2)
         {
-            Append().FloatFixed(number, fixedAfterDecimal);
+            if (Append().FloatFixed(number, fixedAfterDecimal))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Dobule(double number, sbyte maxDigitsAfterDecimal = 2)
         {
-            Append().Float((float)number, maxDigitsAfterDecimal);
+            if (Append().Float((float)number, maxDigitsAfterDecimal))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args DobuleFixed(double number, sbyte fixedAfterDecimal = 2)
         {
-            Append().FloatFixed((float)number, fixedAfterDecimal);
+            if (Append().FloatFixed((float)number, fixedAfterDecimal))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Obj(object obj)
         {
-            Append().Obj(obj);
+            if (Append().Obj(obj))
+            {
+                NotifyChanged();
+            }
             return this;
         }
 
@@ -147,7 +192,7 @@ namespace Fury.Strings
 
         public static implicit operator Args(string[] input)
         {
-            var args = new Args();
+            var args = new Args(out _);
             foreach (var a in input)
             {
                 args.Str(a);
@@ -157,7 +202,7 @@ namespace Fury.Strings
 
         public static implicit operator Args(object[] input)
         {
-            var args = new Args();
+            var args = new Args(out _);
             foreach (var a in input)
             {
                 args.Obj(a);

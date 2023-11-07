@@ -43,64 +43,97 @@ namespace Fury.Strings
 
         [FieldOffset(Helpers.PtrSize + sizeof(int) + sizeof(int))] private ArgType _type;
 
-        internal void Bool(bool b)
+        internal bool Bool(bool b)
         {
+            var changed = _type != ArgType.Bool 
+                || _bool != b;
             _type = ArgType.Bool;
             _bool = b;
+            return changed;
         }
 
-        internal void Char(char c)
+        internal bool Char(char c)
         {
+            var changed = _type != ArgType.Char 
+                || _char != c;
             _type = ArgType.Char;
             _char = c;
+            return changed;
         }
 
-        internal void Char(char c, short repeat)
+        internal bool Char(char c, short repeats)
         {
-            _type = ArgType.Char;
+            var changed = _type != ArgType.CharRepeat
+                || _char != c
+                || _s0 != repeats;
+            _type = ArgType.CharRepeat;
             _char = c;
-            _s0 = repeat;
+            _s0 = repeats;
+            return changed;
         }
 
-        internal void Str(string str)
+        internal bool Str(string str)
         {
+            var changed = _type != ArgType.String
+                || _str != str;
             _type = ArgType.String;
             _str = str;
+            return changed;
         }
 
-        internal void StrRange(string str, short start, short length)
+        internal bool StrRange(string str, short start, short length)
         {
+            var changed = _type != ArgType.StringRange
+                || _str != str
+                || _s0 != start
+                || _s1 != length;
             _type = ArgType.StringRange;
             _str = str;
             _s0 = start;
             _s1 = length;
+            return changed;
         }
 
-        internal void Int(int number, byte numberBase = 10)
+        internal bool Int(int number, byte numberBase = 10)
         {
+            var changed = _type != ArgType.Int
+                || _int != number
+                || _b0 != numberBase;
             _type = ArgType.Int;
             _int = number;
             _b0 = numberBase;
+            return changed;
         }
 
-        internal void Float(float number, sbyte maxDigitsAfterDecimal = -1)
+        internal bool Float(float number, sbyte maxDigitsAfterDecimal = -1)
         {
+            var changed = _type != ArgType.Float
+                || _float != number
+                || _sb0 != maxDigitsAfterDecimal;
             _type = ArgType.Float;
             _float = number;
             _sb0 = maxDigitsAfterDecimal;
+            return changed;
         }
 
-        internal void FloatFixed(float number, sbyte fixedAfterDecimal= 2)
+        internal bool FloatFixed(float number, sbyte fixedAfterDecimal= 2)
         {
+            var changed = _type != ArgType.FloatFixedAfterDecimal
+                || _float != number
+                || _sb0 != fixedAfterDecimal;
             _type = ArgType.FloatFixedAfterDecimal;
             _float = number;
             _sb0 = fixedAfterDecimal;
+            return changed;
         }
 
-        internal void Obj(object obj)
+        internal bool Obj(object obj)
         {
+            var changed = _type != ArgType.Object
+                || !object.Equals(_obj, obj);
             _type = ArgType.Object;
             _obj = obj;
+            return changed;
         }
 
         internal unsafe bool Append(ZeroFormat format)

@@ -41,13 +41,28 @@ namespace Fury.Strings
             _tagsAlias = tagsAlias;
             _tagsProcessor = tagsProcessor;
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override unsafe string ToString()
+        {
+            return ToString(null);
+        }
+
+        public unsafe string ToString(string currentString)
         {
             _length = 0;
             fixed (char* start = _format)
             {
                 Process(start, _format.Length);
+            }
+            if (currentString != null && _length == currentString.Length)
+            {
+                fixed (char* s0 = currentString, s1 = _buffer) {
+                    if (Helpers.Compare(s0, s1, _length))
+                    {
+                        return currentString;
+                    }
+                }
             }
             return new string(_buffer, 0, _length);
         }
