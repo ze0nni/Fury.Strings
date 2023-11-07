@@ -165,7 +165,7 @@ namespace Fury.Strings
                 return string.Empty;
             }
             
-            if (_str != null && _start == 0 && Length == _str.Length)
+            if (_type == RefType.Str && _start == 0 && Length == _str.Length)
             {
                 return _str;
             }
