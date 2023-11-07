@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Fury.Strings
 {
@@ -68,7 +69,7 @@ namespace Fury.Strings
 
             var intNumber = (int)number;
             format.Append(intNumber);
-            var fraction = number - intNumber;
+            var fraction = Mathf.Abs(number - intNumber);
 
             if (afterFormat == AfterDecimalFormat.Fixed)
             {
