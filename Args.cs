@@ -37,7 +37,7 @@ namespace Fury.Strings
                 return;
             }
             _onChangedTriggered = true;
-            _onChanged.Invoke();
+            _onChanged?.Invoke();
         }
 
         private ref Arg Append()

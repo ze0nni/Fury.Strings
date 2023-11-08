@@ -45,98 +45,125 @@ namespace Fury.Strings
 
         internal bool Bool(bool b)
         {
-            var changed = _type != ArgType.Bool 
-                || _bool != b;
+            if (_type == ArgType.Bool 
+                && _bool == b)
+            {
+                return false;
+            }
             _type = ArgType.Bool;
             _bool = b;
-            return changed;
+            return true;
         }
 
         internal bool Char(char c)
         {
-            var changed = _type != ArgType.Char 
-                || _char != c;
+            if(_type == ArgType.Char 
+                && _char == c)
+            {
+                return false;
+            }
             _type = ArgType.Char;
             _char = c;
-            return changed;
+            return true;
         }
 
         internal bool Char(char c, short repeats)
         {
-            var changed = _type != ArgType.CharRepeat
-                || _char != c
-                || _s0 != repeats;
+            if(_type == ArgType.CharRepeat
+                && _char == c
+                && _s0 == repeats)
+            {
+                return false;
+            }
             _type = ArgType.CharRepeat;
             _char = c;
             _s0 = repeats;
-            return changed;
+            return true;
         }
 
         internal bool Str(string str)
         {
-            var changed = _type != ArgType.String
-                || _str != str;
+            if(_type == ArgType.String
+                && _str == str)
+            {
+                return false;
+            }
             _type = ArgType.String;
             _str = str;
-            return changed;
+            return true;
         }
 
         internal bool StrRange(string str, short start, short length)
         {
-            var changed = _type != ArgType.StringRange
-                || _str != str
-                || _s0 != start
-                || _s1 != length;
+            if(_type == ArgType.StringRange
+                && _str == str
+                && _s0 == start
+                & _s1 == length)
+            {
+                return false;
+            }
             _type = ArgType.StringRange;
             _str = str;
             _s0 = start;
             _s1 = length;
-            return changed;
+            return true;
         }
 
         internal bool Int(int number, byte numberBase = 10)
         {
-            var changed = _type != ArgType.Int
-                || _int != number
-                || _b0 != numberBase;
+            if(_type == ArgType.Int
+                && _int == number
+                && _b0 == numberBase)
+            {
+                return false;
+            }
             _type = ArgType.Int;
             _int = number;
             _b0 = numberBase;
-            return changed;
+            return true;
         }
 
         internal bool Float(float number, sbyte maxDigitsAfterDecimal = -1)
         {
-            var changed = _type != ArgType.Float
-                || _float != number
-                || _sb0 != maxDigitsAfterDecimal;
+            if(_type == ArgType.Float
+                && _float == number
+                && _sb0 == maxDigitsAfterDecimal)
+            {
+                return false;
+            }
             _type = ArgType.Float;
             _float = number;
             _sb0 = maxDigitsAfterDecimal;
-            return changed;
+            return true;
         }
 
         internal bool FloatFixed(float number, sbyte fixedAfterDecimal= 2)
         {
-            var changed = _type != ArgType.FloatFixedAfterDecimal
-                || _float != number
-                || _sb0 != fixedAfterDecimal;
+            if(_type == ArgType.FloatFixedAfterDecimal
+                && _float == number
+                && _sb0 == fixedAfterDecimal)
+            {
+                return false;
+            }
             _type = ArgType.FloatFixedAfterDecimal;
             _float = number;
             _sb0 = fixedAfterDecimal;
-            return changed;
+            return true;
         }
 
         internal bool Obj(object obj)
         {
-            var changed = _type != ArgType.Object
-                || !object.Equals(_obj, obj);
+            if(_type == ArgType.Object
+                && object.Equals(_obj, obj))
+            {
+                return false;
+            }
             _type = ArgType.Object;
             _obj = obj;
-            return changed;
+            return true;
         }
 
-        internal unsafe bool Append(ZeroFormat format)
+        internal unsafe bool Write(ZeroFormat format)
         {
             switch (_type)
             {

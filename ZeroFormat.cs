@@ -426,7 +426,7 @@ namespace Fury.Strings
                         if (type == ArgType.Arg)
                         {
                             var argsN = args.Length;
-                            if (body.TryParseInt(out var n) && n >= 0 && n < argsN && args[n].Append(this))
+                            if (body.TryParseInt(out var n) && n >= 0 && n < argsN && args[n].Write(this))
                             {
                                 //
                             }
