@@ -14,6 +14,7 @@ namespace Fury.Strings
         Int,
         Float,
         FloatFixedAfterDecimal,
+        Timer,
         Object,
     }
 
@@ -151,6 +152,20 @@ namespace Fury.Strings
             return true;
         }
 
+        internal bool Timer(int seconds, TimerFormatFlags flags)
+        {
+            if (_type == ArgType.Timer
+                && _int == seconds
+                && _b0 == (byte)flags)
+            {
+                return false;
+            }
+            _type = ArgType.Timer;
+            _int = seconds;
+            _b0 = (byte)flags;
+            return true;
+        }
+
         internal bool Obj(object obj)
         {
             if(_type == ArgType.Object
@@ -179,7 +194,7 @@ namespace Fury.Strings
                     for (var i = 0; i < _s0; i++) {
                         format.Append(_char);
                     }
-                    return false;
+                    return true;
                 case ArgType.String:
                     format.Append(_str);
                     return true;
@@ -199,6 +214,9 @@ namespace Fury.Strings
                     return true;
                 case ArgType.FloatFixedAfterDecimal:
                     format.Append(_float, ZeroFormatExtensions.AfterDecimalFormat.Fixed, _sb0);
+                    return true;
+                case ArgType.Timer:
+                    format.AppendTimer(_int, (TimerFormatFlags)_b0);
                     return true;
                 case ArgType.Object:
                     format.Append(_obj == null ? "null" :_obj.ToString());

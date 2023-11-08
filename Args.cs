@@ -165,6 +165,16 @@ namespace Fury.Strings
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Args Timer(int seconds, TimerFormatFlags flags = 0)
+        {
+            if (Append().Timer(seconds, flags))
+            {
+                NotifyChanged();
+            }
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Args Obj(object obj)
         {
             if (Append().Obj(obj))

@@ -3,6 +3,12 @@ using UnityEngine;
 
 namespace Fury.Strings
 {
+    [Flags]
+    public enum TimerFormatFlags : byte
+    {
+        Hours = 1 << 0
+    }
+
     public static class ZeroFormatExtensions
     {
         public static unsafe void Append(this ZeroFormat format, int number, byte @base = 10)
@@ -113,6 +119,38 @@ namespace Fury.Strings
                     fraction -= digit;
                 }
             }
+        }
+
+        public static void AppendTimer(this ZeroFormat format, int seconds, TimerFormatFlags flags)
+        {
+            var ts = TimeSpan.FromSeconds(seconds);
+
+            var hasHours = (flags & TimerFormatFlags.Hours) != 0;
+            if (hasHours)
+            {
+                var hours = (int)ts.TotalHours;
+                if (hours < 10)
+                {
+                    format.Append('0');
+                }
+                format.Append(hours);
+                format.Append(":");
+            }
+
+            var min = hasHours ? ts.Minutes : (int)ts.TotalMinutes;
+            if (min < 10)
+            {
+                format.Append('0');
+            }
+            format.Append(min);
+            format.Append(':');
+
+            var sec = ts.Seconds;
+            if (sec < 10)
+            {
+                format.Append('0');
+            }
+            format.Append(sec);
         }
     }
 }
